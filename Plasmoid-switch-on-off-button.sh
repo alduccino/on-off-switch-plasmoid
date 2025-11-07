@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# KDE Plasma 6.5 On/Off Switch Commands Plasmoid Installer
+# KDE Plasma 6.5 On/Off Switch Commands Plasmoid Installer (Compact Mode)
 # This script installs and configures the plasmoid for KDE Plasma 6
 
 set -e
@@ -51,7 +51,7 @@ cat > "$INSTALL_DIR/metadata.json" << 'EOF'
 }
 EOF
 
-# Create main.qml
+# Create main.qml with compact spacing
 echo "Creating main.qml..."
 cat > "$INSTALL_DIR/contents/ui/main.qml" << 'EOF'
 import QtQuick
@@ -238,14 +238,21 @@ PlasmoidItem {
     toolTipSubText: currentStateText
 
     fullRepresentation: Item {
+        // Compact mode: minimal spacing, tight fit
         Layout.minimumWidth: plasmoid.configuration.buttonWidth > 0 ? plasmoid.configuration.buttonWidth : switchButton.implicitWidth
         Layout.minimumHeight: plasmoid.configuration.buttonHeight > 0 ? plasmoid.configuration.buttonHeight : switchButton.implicitHeight
-        Layout.preferredWidth: plasmoid.configuration.buttonWidth > 0 ? plasmoid.configuration.buttonWidth : switchButton.implicitWidth + Kirigami.Units.largeSpacing * 2
-        Layout.preferredHeight: plasmoid.configuration.buttonHeight > 0 ? plasmoid.configuration.buttonHeight : switchButton.implicitHeight + Kirigami.Units.largeSpacing
+        Layout.preferredWidth: plasmoid.configuration.buttonWidth > 0 ? plasmoid.configuration.buttonWidth : switchButton.implicitWidth
+        Layout.preferredHeight: plasmoid.configuration.buttonHeight > 0 ? plasmoid.configuration.buttonHeight : switchButton.implicitHeight
+        // Remove extra margins
+        Layout.leftMargin: 0
+        Layout.rightMargin: 0
+        Layout.topMargin: 0
+        Layout.bottomMargin: 0
 
         PlasmaComponents.Button {
             id: switchButton
-            anchors.centerIn: parent
+            anchors.fill: parent
+            anchors.margins: 0  // No margins between buttons
             width: plasmoid.configuration.buttonWidth > 0 ? plasmoid.configuration.buttonWidth : implicitWidth
             height: plasmoid.configuration.buttonHeight > 0 ? plasmoid.configuration.buttonHeight : implicitHeight
             text: currentStateText
@@ -748,6 +755,11 @@ echo "========================================="
 echo "Installation Complete!"
 echo "========================================="
 echo ""
+echo "COMPACT MODE ENABLED:"
+echo "- Removed external padding between buttons"
+echo "- Minimal spacing (systray-like compact mode)"
+echo "- Tight fit layout with zero margins"
+echo ""
 echo "To add the widget to your panel:"
 echo "1. Right-click on your panel or desktop"
 echo "2. Select 'Add Widgets...'"
@@ -758,14 +770,10 @@ echo "To configure the widget:"
 echo "1. Right-click on the widget"
 echo "2. Select 'Configure On/Off Switch Commands...'"
 echo ""
-echo "New features in v2.2.0:"
-echo "- Button width control (0 = auto-size)"
-echo "- Button height control (0 = auto-size)"
-echo "- Font size control (0 = default size)"
-echo "- Background transparency control (0-100%)"
-echo "- Customizable border width (0-10px)"
-echo "- Custom border colors for each state"
-echo "- Button padding control for text spacing"
+echo "Tips for even more compact appearance:"
+echo "- Reduce 'Button Padding' to 2-4px in settings"
+echo "- Reduce 'Border Width' to 0-1px"
+echo "- Use shorter text labels (e.g., 'ON'/'OFF' instead of longer text)"
 echo ""
-echo "Enjoy your upgraded KDE Plasma 6.5 plasmoid!"
+echo "Enjoy your compact KDE Plasma 6.5 plasmoid!"
 echo ""
