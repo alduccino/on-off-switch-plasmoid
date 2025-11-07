@@ -40,7 +40,7 @@ cat > "$INSTALL_DIR/metadata.json" << 'EOF'
         "Id": "org.kde.plasma.onoffswitch",
         "License": "GPL-2.0+",
         "Name": "On/Off Switch Commands",
-        "Version": "2.0.0",
+        "Version": "2.2.0",
         "Website": "https://github.com/Intika-KDE-Plasmoids/plasmoid-on-off-switch-commands"
     },
     "KPackageStructure": "Plasma/Applet",
@@ -195,12 +195,32 @@ PlasmoidItem {
     }
 
     function getBackgroundColor() {
+        var color
         if (isInactive) {
-            return plasmoid.configuration.colorInactive
+            color = plasmoid.configuration.colorInactive
         } else if (switchState) {
-            return plasmoid.configuration.colorOn
+            color = plasmoid.configuration.colorOn
         } else {
-            return plasmoid.configuration.colorOff
+            color = plasmoid.configuration.colorOff
+        }
+
+        // Apply transparency
+        var opacity = plasmoid.configuration.backgroundOpacity / 100.0
+        return Qt.rgba(
+            parseInt(color.substr(1,2), 16) / 255.0,
+            parseInt(color.substr(3,2), 16) / 255.0,
+            parseInt(color.substr(5,2), 16) / 255.0,
+            opacity
+        )
+    }
+
+    function getBorderColor() {
+        if (isInactive) {
+            return plasmoid.configuration.borderColorInactive
+        } else if (switchState) {
+            return plasmoid.configuration.borderColorOn
+        } else {
+            return plasmoid.configuration.borderColorOff
         }
     }
 
@@ -218,23 +238,26 @@ PlasmoidItem {
     toolTipSubText: currentStateText
 
     fullRepresentation: Item {
-        Layout.minimumWidth: switchButton.implicitWidth
-        Layout.minimumHeight: switchButton.implicitHeight
-        Layout.preferredWidth: switchButton.implicitWidth + Kirigami.Units.largeSpacing * 2
-        Layout.preferredHeight: switchButton.implicitHeight + Kirigami.Units.largeSpacing
+        Layout.minimumWidth: plasmoid.configuration.buttonWidth > 0 ? plasmoid.configuration.buttonWidth : switchButton.implicitWidth
+        Layout.minimumHeight: plasmoid.configuration.buttonHeight > 0 ? plasmoid.configuration.buttonHeight : switchButton.implicitHeight
+        Layout.preferredWidth: plasmoid.configuration.buttonWidth > 0 ? plasmoid.configuration.buttonWidth : switchButton.implicitWidth + Kirigami.Units.largeSpacing * 2
+        Layout.preferredHeight: plasmoid.configuration.buttonHeight > 0 ? plasmoid.configuration.buttonHeight : switchButton.implicitHeight + Kirigami.Units.largeSpacing
 
         PlasmaComponents.Button {
             id: switchButton
             anchors.centerIn: parent
+            width: plasmoid.configuration.buttonWidth > 0 ? plasmoid.configuration.buttonWidth : implicitWidth
+            height: plasmoid.configuration.buttonHeight > 0 ? plasmoid.configuration.buttonHeight : implicitHeight
             text: currentStateText
             checkable: true
             checked: switchState
+            padding: plasmoid.configuration.buttonPadding
 
             background: Rectangle {
                 color: getBackgroundColor()
                 radius: 4
-                border.color: Qt.darker(getBackgroundColor(), 1.2)
-                border.width: 1
+                border.color: getBorderColor()
+                border.width: plasmoid.configuration.borderWidth
             }
 
             contentItem: Text {
@@ -242,7 +265,11 @@ PlasmoidItem {
                 color: getTextColor()
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                font: switchButton.font
+                font.pixelSize: plasmoid.configuration.fontSize > 0 ? plasmoid.configuration.fontSize : 12
+                leftPadding: plasmoid.configuration.buttonPadding
+                rightPadding: plasmoid.configuration.buttonPadding
+                topPadding: plasmoid.configuration.buttonPadding
+                bottomPadding: plasmoid.configuration.buttonPadding
             }
 
             onClicked: {
@@ -282,6 +309,15 @@ KCM.SimpleKCM {
     property alias cfg_watcherEnabled: watcherEnabledCheck.checked
     property alias cfg_watcherCommand: watcherCommandField.text
     property alias cfg_watcherInterval: watcherIntervalSpin.value
+    property alias cfg_backgroundOpacity: opacitySpin.value
+    property alias cfg_borderWidth: borderWidthSpin.value
+    property alias cfg_borderColorOn: borderColorOnField.text
+    property alias cfg_borderColorOff: borderColorOffField.text
+    property alias cfg_borderColorInactive: borderColorInactiveField.text
+    property alias cfg_buttonPadding: buttonPaddingSpin.value
+    property alias cfg_buttonWidth: buttonWidthSpin.value
+    property alias cfg_buttonHeight: buttonHeightSpin.value
+    property alias cfg_fontSize: fontSizeSpin.value
 
     ColumnLayout {
         spacing: 10
@@ -348,7 +384,71 @@ KCM.SimpleKCM {
 
         GroupBox {
             Layout.fillWidth: true
-            title: "Colors"
+            title: "Button Size & Appearance"
+
+            GridLayout {
+                anchors.fill: parent
+                columns: 2
+
+                Label { text: "Button Width (px, 0=auto):" }
+                SpinBox {
+                    id: buttonWidthSpin
+                    from: 0
+                    to: 500
+                    value: 0
+                    Layout.fillWidth: true
+                }
+
+                Label { text: "Button Height (px, 0=auto):" }
+                SpinBox {
+                    id: buttonHeightSpin
+                    from: 0
+                    to: 500
+                    value: 0
+                    Layout.fillWidth: true
+                }
+
+                Label { text: "Font Size (px, 0=default):" }
+                SpinBox {
+                    id: fontSizeSpin
+                    from: 0
+                    to: 72
+                    value: 0
+                    Layout.fillWidth: true
+                }
+
+                Label { text: "Background Opacity (%):" }
+                SpinBox {
+                    id: opacitySpin
+                    from: 0
+                    to: 100
+                    value: 100
+                    Layout.fillWidth: true
+                }
+
+                Label { text: "Border Width (px):" }
+                SpinBox {
+                    id: borderWidthSpin
+                    from: 0
+                    to: 10
+                    value: 1
+                    Layout.fillWidth: true
+                }
+
+                Label { text: "Button Padding (px):" }
+                SpinBox {
+                    id: buttonPaddingSpin
+                    from: 0
+                    to: 50
+                    value: 8
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        GroupBox {
+            Layout.fillWidth: true
+            title: "Background Colors"
 
             GridLayout {
                 anchors.fill: parent
@@ -374,6 +474,47 @@ KCM.SimpleKCM {
                     Layout.fillWidth: true
                     placeholderText: "#9E9E9E"
                 }
+            }
+        }
+
+        GroupBox {
+            Layout.fillWidth: true
+            title: "Border Colors"
+
+            GridLayout {
+                anchors.fill: parent
+                columns: 2
+
+                Label { text: "Border On:" }
+                TextField {
+                    id: borderColorOnField
+                    Layout.fillWidth: true
+                    placeholderText: "#45A049"
+                }
+
+                Label { text: "Border Off:" }
+                TextField {
+                    id: borderColorOffField
+                    Layout.fillWidth: true
+                    placeholderText: "#D32F2F"
+                }
+
+                Label { text: "Border Inactive:" }
+                TextField {
+                    id: borderColorInactiveField
+                    Layout.fillWidth: true
+                    placeholderText: "#757575"
+                }
+            }
+        }
+
+        GroupBox {
+            Layout.fillWidth: true
+            title: "Text Colors"
+
+            GridLayout {
+                anchors.fill: parent
+                columns: 2
 
                 Label { text: "Text Color On:" }
                 TextField {
@@ -536,6 +677,33 @@ cat > "$INSTALL_DIR/contents/config/main.xml" << 'EOF'
     <entry name="watcherInterval" type="Int">
       <default>5</default>
     </entry>
+    <entry name="backgroundOpacity" type="Int">
+      <default>100</default>
+    </entry>
+    <entry name="borderWidth" type="Int">
+      <default>1</default>
+    </entry>
+    <entry name="borderColorOn" type="String">
+      <default>#45A049</default>
+    </entry>
+    <entry name="borderColorOff" type="String">
+      <default>#D32F2F</default>
+    </entry>
+    <entry name="borderColorInactive" type="String">
+      <default>#757575</default>
+    </entry>
+    <entry name="buttonPadding" type="Int">
+      <default>8</default>
+    </entry>
+    <entry name="buttonWidth" type="Int">
+      <default>0</default>
+    </entry>
+    <entry name="buttonHeight" type="Int">
+      <default>0</default>
+    </entry>
+    <entry name="fontSize" type="Int">
+      <default>0</default>
+    </entry>
   </group>
 </kcfg>
 EOF
@@ -589,6 +757,15 @@ echo ""
 echo "To configure the widget:"
 echo "1. Right-click on the widget"
 echo "2. Select 'Configure On/Off Switch Commands...'"
+echo ""
+echo "New features in v2.2.0:"
+echo "- Button width control (0 = auto-size)"
+echo "- Button height control (0 = auto-size)"
+echo "- Font size control (0 = default size)"
+echo "- Background transparency control (0-100%)"
+echo "- Customizable border width (0-10px)"
+echo "- Custom border colors for each state"
+echo "- Button padding control for text spacing"
 echo ""
 echo "Enjoy your upgraded KDE Plasma 6.5 plasmoid!"
 echo ""
