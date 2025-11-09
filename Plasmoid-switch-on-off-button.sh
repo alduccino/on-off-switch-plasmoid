@@ -40,7 +40,7 @@ cat > "$INSTALL_DIR/metadata.json" << 'EOF'
         "Id": "org.kde.plasma.onoffswitch",
         "License": "GPL-2.0+",
         "Name": "On/Off Switch Commands",
-        "Version": "2.2.0",
+        "Version": "2.3.0",
         "Website": "https://github.com/Intika-KDE-Plasmoids/plasmoid-on-off-switch-commands"
     },
     "KPackageStructure": "Plasma/Applet",
@@ -51,7 +51,7 @@ cat > "$INSTALL_DIR/metadata.json" << 'EOF'
 }
 EOF
 
-# Create main.qml with compact spacing
+# Create main.qml with compact spacing and startup state options
 echo "Creating main.qml..."
 cat > "$INSTALL_DIR/contents/ui/main.qml" << 'EOF'
 import QtQuick
@@ -72,9 +72,36 @@ PlasmoidItem {
     preferredRepresentation: fullRepresentation
 
     Component.onCompleted: {
-        updateState()
+        // Handle startup state based on configuration
+        // startupState: 0=ON, 1=OFF, 2=Inactive
+        var startupState = plasmoid.configuration.startupState
+        
+        if (startupState === 0) {
+            // ON state
+            switchState = true
+            isInactive = false
+            updateState()
+            if (plasmoid.configuration.executeCommandOnStartup) {
+                executeCommand(true)
+            }
+        } else if (startupState === 1) {
+            // OFF state
+            switchState = false
+            isInactive = false
+            updateState()
+            if (plasmoid.configuration.executeCommandOnStartup) {
+                executeCommand(false)
+            }
+        } else if (startupState === 2) {
+            // Inactive state
+            switchState = false
+            isInactive = true
+            updateState()
+            // Don't execute any command for inactive state
+        }
 
-        if (plasmoid.configuration.toggleOnStartup) {
+        // Legacy support for toggleOnStartup (deprecated but kept for compatibility)
+        if (plasmoid.configuration.toggleOnStartup && startupState === 0) {
             executeCommand(true)
         } else if (plasmoid.configuration.watchStateOnStartup) {
             checkCurrentState()
@@ -303,6 +330,8 @@ KCM.SimpleKCM {
     property alias cfg_textOff: textOffField.text
     property alias cfg_textInactive: textInactiveField.text
     property alias cfg_tooltipText: tooltipField.text
+    property alias cfg_startupState: startupStateCombo.currentIndex
+    property alias cfg_executeCommandOnStartup: executeCommandCheck.checked
     property alias cfg_toggleOnStartup: toggleOnStartupCheck.checked
     property alias cfg_watchStateOnStartup: watchStateStartupCheck.checked
     property alias cfg_checkExecution: checkExecutionCheck.checked
@@ -548,21 +577,70 @@ KCM.SimpleKCM {
 
         GroupBox {
             Layout.fillWidth: true
-            title: "Behavior"
+            title: "Startup Behavior"
 
             ColumnLayout {
                 anchors.fill: parent
+                spacing: 10
+
+                RowLayout {
+                    Label { 
+                        text: "Initial State:" 
+                        Layout.minimumWidth: 100
+                    }
+                    ComboBox {
+                        id: startupStateCombo
+                        Layout.fillWidth: true
+                        model: ["ON", "OFF", "Inactive"]
+                        currentIndex: 0
+                    }
+                }
+
+                CheckBox {
+                    id: executeCommandCheck
+                    text: "Execute command on startup (for ON/OFF states)"
+                    ToolTip.visible: hovered
+                    ToolTip.text: "When enabled, the corresponding command will be executed on startup based on the initial state (ON or OFF). Inactive state never executes commands."
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: "#cccccc"
+                    Layout.topMargin: 5
+                    Layout.bottomMargin: 5
+                }
+
+                Label {
+                    text: "Legacy Options (deprecated):"
+                    font.italic: true
+                    font.pixelSize: 10
+                }
 
                 CheckBox {
                     id: toggleOnStartupCheck
-                    text: "Execute ON command on startup"
+                    text: "Execute ON command on startup (legacy)"
+                    font.pixelSize: 10
+                    enabled: false
+                    opacity: 0.6
                 }
 
                 CheckBox {
                     id: watchStateStartupCheck
-                    text: "Watch state on startup"
+                    text: "Watch state on startup (legacy)"
+                    font.pixelSize: 10
                     enabled: !toggleOnStartupCheck.checked
+                    opacity: 0.6
                 }
+            }
+        }
+
+        GroupBox {
+            Layout.fillWidth: true
+            title: "Behavior"
+
+            ColumnLayout {
+                anchors.fill: parent
 
                 CheckBox {
                     id: checkExecutionCheck
@@ -644,6 +722,12 @@ cat > "$INSTALL_DIR/contents/config/main.xml" << 'EOF'
     </entry>
     <entry name="tooltipText" type="String">
       <default>On/Off Switch</default>
+    </entry>
+    <entry name="startupState" type="Int">
+      <default>0</default>
+    </entry>
+    <entry name="executeCommandOnStartup" type="Bool">
+      <default>false</default>
     </entry>
     <entry name="toggleOnStartup" type="Bool">
       <default>true</default>
@@ -755,6 +839,11 @@ echo "========================================="
 echo "Installation Complete!"
 echo "========================================="
 echo ""
+echo "NEW FEATURES:"
+echo "- Startup state options: ON (default), OFF, or Inactive"
+echo "- Optional command execution on startup"
+echo "- Legacy startup options preserved for compatibility"
+echo ""
 echo "COMPACT MODE ENABLED:"
 echo "- Removed external padding between buttons"
 echo "- Minimal spacing (systray-like compact mode)"
@@ -766,14 +855,12 @@ echo "2. Select 'Add Widgets...'"
 echo "3. Search for 'On/Off Switch Commands'"
 echo "4. Drag it to your panel or desktop"
 echo ""
-echo "To configure the widget:"
+echo "To configure startup behavior:"
 echo "1. Right-click on the widget"
 echo "2. Select 'Configure On/Off Switch Commands...'"
+echo "3. Go to 'Startup Behavior' section"
+echo "4. Choose initial state: ON (default), OFF, or Inactive"
+echo "5. Optionally enable 'Execute command on startup'"
 echo ""
-echo "Tips for even more compact appearance:"
-echo "- Reduce 'Button Padding' to 2-4px in settings"
-echo "- Reduce 'Border Width' to 0-1px"
-echo "- Use shorter text labels (e.g., 'ON'/'OFF' instead of longer text)"
-echo ""
-echo "Enjoy your compact KDE Plasma 6.5 plasmoid!"
+echo "Enjoy your enhanced KDE Plasma 6.5 plasmoid!"
 echo ""
