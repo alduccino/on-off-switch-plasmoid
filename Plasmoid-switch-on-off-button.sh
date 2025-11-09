@@ -570,7 +570,7 @@ KCM.SimpleKCM {
                 TextField {
                     id: textColorInactiveField
                     Layout.fillWidth: true
-                    placeholderText: "#a1a9b1"
+                    placeholderText: "#FCFCFC"
                 }
             }
         }
