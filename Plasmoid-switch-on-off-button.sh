@@ -75,7 +75,7 @@ PlasmoidItem {
         // Handle startup state based on configuration
         // startupState: 0=ON, 1=OFF, 2=Inactive
         var startupState = plasmoid.configuration.startupState
-        
+
         if (startupState === 0) {
             // ON state
             switchState = true
@@ -508,7 +508,7 @@ KCM.SimpleKCM {
                 TextField {
                     id: colorInactiveField
                     Layout.fillWidth: true
-                    placeholderText: "#9E9E9E"
+                    placeholderText: "#a1a9b1"
                 }
             }
         }
@@ -539,7 +539,7 @@ KCM.SimpleKCM {
                 TextField {
                     id: borderColorInactiveField
                     Layout.fillWidth: true
-                    placeholderText: "#757575"
+                    placeholderText: "#a1a9b1"
                 }
             }
         }
@@ -556,21 +556,21 @@ KCM.SimpleKCM {
                 TextField {
                     id: textColorOnField
                     Layout.fillWidth: true
-                    placeholderText: "#FFFFFF"
+                    placeholderText: "#FCFCFC"
                 }
 
                 Label { text: "Text Color Off:" }
                 TextField {
                     id: textColorOffField
                     Layout.fillWidth: true
-                    placeholderText: "#FFFFFF"
+                    placeholderText: "#FCFCFC"
                 }
 
                 Label { text: "Text Color Inactive:" }
                 TextField {
                     id: textColorInactiveField
                     Layout.fillWidth: true
-                    placeholderText: "#FFFFFF"
+                    placeholderText: "#a1a9b1"
                 }
             }
         }
@@ -584,8 +584,8 @@ KCM.SimpleKCM {
                 spacing: 10
 
                 RowLayout {
-                    Label { 
-                        text: "Initial State:" 
+                    Label {
+                        text: "Initial State:"
                         Layout.minimumWidth: 100
                     }
                     ComboBox {
